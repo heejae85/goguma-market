@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/* ── 고구마마켓: 오래된 책장을 넘기는 듯한 베이지 톤 ── */
+:root {
+  --paper: #f3e9d2;        /* 바탕 종이 */
+  --paper-deep: #e8d9b5;   /* 누렇게 바랜 종이 */
+  --page: #faf4e4;         /* 책 속지 */
+  --ink: #3b2a1a;          /* 먹색 글씨 */
+  --ink-soft: #6b5440;     /* 연한 글씨 */
+  --sepia: #8b5e34;        /* 세피아 강조 */
+  --goguma: #8c3b4a;       /* 고구마 껍질 자주색 */
+  --goguma-deep: #6e2b38;
+  --line: #c9b48a;         /* 괘선 */
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-page: var(--page);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-sepia: var(--sepia);
+  --color-goguma: var(--goguma);
+  --color-goguma-deep: var(--goguma-deep);
+  --color-line: var(--line);
+  --font-serif: var(--font-gowun), "Batang", serif;
+  --font-title: var(--font-nanum), "Batang", serif;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  color: var(--ink);
+  font-family: var(--font-gowun), "Batang", serif;
+  /* 종이 결 느낌: 은은한 얼룩 + 가장자리 바램 */
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, 0.7), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(190, 150, 90, 0.18), transparent 50%),
+    radial-gradient(circle at 50% 50%, transparent 60%, rgba(120, 85, 40, 0.18) 100%),
+    var(--paper);
+  background-attachment: fixed;
+  word-break: keep-all;
+}
+
+/* 책 속지 카드 */
+.book-page {
+  background: var(--page);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 10px 30px -12px rgba(80, 50, 20, 0.35),
+    4px 4px 0 var(--paper-deep);
+  position: relative;
+}
+
+/* 고서 액자처럼 안쪽에 이중 테두리 */
+.book-page::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--line);
+  outline: 1px solid var(--line);
+  outline-offset: 3px;
+  pointer-events: none;
+}
+
+/* 장식 구분선 ─── ❦ ─── */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--sepia);
+}
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--line), transparent);
+}
+
+/* 밑줄만 있는 공책식 입력칸 */
+.ink-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.25rem;
+  font-size: 1rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ink-input::placeholder {
+  color: #a8957a;
+  font-style: italic;
+}
+.ink-input:focus {
+  border-bottom-color: var(--goguma);
+  background: rgba(232, 217, 181, 0.25);
+}
+
+/* 도장 찍은 듯한 버튼 */
+.stamp-btn {
+  background: var(--goguma);
+  color: var(--page);
+  border: 1px solid var(--goguma-deep);
+  box-shadow: 2px 2px 0 var(--goguma-deep);
+  letter-spacing: 0.15em;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+}
+.stamp-btn:hover {
+  background: var(--goguma-deep);
+}
+.stamp-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--goguma-deep);
+}
+.stamp-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.ghost-btn {
+  border: 1px solid var(--sepia);
+  color: var(--sepia);
+  letter-spacing: 0.1em;
+  transition: background 0.2s, color 0.2s;
+}
+.ghost-btn:hover {
+  background: var(--sepia);
+  color: var(--page);
+}
+
+/* 첫 글자 크게 (옛 책 장식 머리글자) */
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-nanum), serif;
+  font-size: 3.2em;
+  line-height: 0.9;
+  padding: 0.05em 0.12em 0 0;
+  color: var(--goguma);
+}
