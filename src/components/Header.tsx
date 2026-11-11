@@ -35,6 +35,9 @@ async function UserNav() {
   if (!user) {
     return (
       <nav className="flex items-center gap-2 sm:gap-3 text-sm">
+        <Link href="/posts" className="text-ink hover:text-goguma">
+          장터 구경
+        </Link>
         <Link href="/login" className="ghost-btn px-3 py-1.5">
           로그인
         </Link>
@@ -54,6 +57,12 @@ async function UserNav() {
 
   return (
     <nav className="flex items-center gap-2 sm:gap-3 text-sm">
+      <Link href="/posts" className="text-ink hover:text-goguma">
+        장터 구경
+      </Link>
+      <Link href="/posts/new" className="stamp-btn px-3 py-1.5">
+        글쓰기
+      </Link>
       <Link href="/mypage" className="text-ink hover:text-goguma">
         <span className="font-bold">{nickname}</span> 님
       </Link>

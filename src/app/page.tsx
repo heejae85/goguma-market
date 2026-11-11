@@ -40,15 +40,23 @@ async function CallToAction() {
     return (
       <div className="space-y-4">
         <p className="text-ink">어서 오세요, 장터 문이 열렸습니다.</p>
-        <Link href="/mypage" className="stamp-btn inline-block px-8 py-3">
-          내 서재 보기
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/posts" className="stamp-btn px-8 py-3">
+            장터 구경하기
+          </Link>
+          <Link href="/posts/new" className="ghost-btn px-8 py-3">
+            판매글 쓰기
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <Link href="/posts" className="ghost-btn px-8 py-3">
+        장터 구경하기
+      </Link>
       <Link href="/signup" className="stamp-btn px-8 py-3">
         장터 명부에 이름 올리기
       </Link>

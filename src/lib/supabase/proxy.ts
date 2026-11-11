@@ -2,7 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // 로그인이 필요한 경로
-const PROTECTED_PATHS = ["/mypage"];
+const PROTECTED_PATHS = ["/mypage", "/posts/new"];
+// 경로 중간에 id가 들어가서 앞부분 비교(startsWith)로는 못 잡는 경로 → 정규식으로 확인
+const PROTECTED_PATTERNS = [/^\/posts\/[^/]+\/edit\/?$/];
 // 로그인한 사용자는 들어갈 필요 없는 경로
 const GUEST_ONLY_PATHS = ["/login", "/signup"];
 
@@ -50,7 +52,11 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (!user && PROTECTED_PATHS.some((p) => path.startsWith(p))) {
+  const isProtected =
+    PROTECTED_PATHS.some((p) => path.startsWith(p)) ||
+    PROTECTED_PATTERNS.some((re) => re.test(path));
+
+  if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", path);
