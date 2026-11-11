@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import BookCard from "@/components/BookCard";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/auth/actions";
+import LogoutButton from "@/components/LogoutButton";
 
 export const metadata = { title: "내 서재 · 고구마마켓" };
 
@@ -56,11 +56,7 @@ async function ProfileDetails() {
 
       <div className="ornament my-6">✦</div>
 
-      <form action={logout}>
-        <button type="submit" className="ghost-btn w-full py-3">
-          로그아웃
-        </button>
-      </form>
+      <LogoutButton className="w-full py-3" />
     </>
   );
 }

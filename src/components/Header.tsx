@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/auth/actions";
+import LogoutButton from "@/components/LogoutButton";
 
 // 헤더 자체(로고)는 정적으로 미리 그려두고,
 // 로그인 상태에 따라 바뀌는 메뉴만 요청 시점에 스트리밍한다 (Cache Components 방식)
@@ -57,11 +57,7 @@ async function UserNav() {
       <Link href="/mypage" className="text-ink hover:text-goguma">
         <span className="font-bold">{nickname}</span> 님
       </Link>
-      <form action={logout}>
-        <button type="submit" className="ghost-btn px-3 py-1.5">
-          로그아웃
-        </button>
-      </form>
+      <LogoutButton className="px-3 py-1.5" />
     </nav>
   );
 }

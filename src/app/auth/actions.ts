@@ -117,7 +117,8 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
 
 export async function logout() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // scope: "local" → 지금 이 브라우저만 로그아웃 (기본값 "global"은 다른 기기 세션까지 끊음)
+  await supabase.auth.signOut({ scope: "local" });
   revalidatePath("/", "layout");
   redirect("/");
 }

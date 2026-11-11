@@ -31,24 +31,45 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // 주의: createServerClient와 getClaims 사이에 다른 코드를 넣지 말 것
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // 주의: createServerClient와 getUser 사이에 다른 코드를 넣지 말 것
+  // getClaims()는 토큰 서명만 확인해서, 서버에서 이미 끝난 세션(다른 곳에서 로그아웃,
+  // 계정 삭제 등)도 "로그인됨"으로 볼 수 있다. 페이지와 판단이 어긋나지 않도록
+  // Supabase 서버에 직접 확인하는 getUser()를 사용한다.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
+
+  // 세션이 무효인데 인증 쿠키가 남아 있으면 지워서 "반쯤 로그인된" 상태를 없앤다
+  if (!user) {
+    const stale = request.cookies.getAll().filter((c) => c.name.startsWith("sb-"));
+    if (stale.length > 0) {
+      stale.forEach(({ name }) => request.cookies.delete(name));
+      response = NextResponse.next({ request });
+      stale.forEach(({ name }) => response.cookies.delete(name));
+    }
+  }
 
   if (!user && PROTECTED_PATHS.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", path);
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, response);
   }
 
   if (user && GUEST_ONLY_PATHS.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, response);
   }
 
   return response;
+}
+
+// 리다이렉트할 때도 위에서 갱신/삭제한 쿠키가 브라우저에 전달되도록 옮겨 담는다
+function redirectWithCookies(url: URL, from: NextResponse) {
+  const redirect = NextResponse.redirect(url);
+  from.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+  return redirect;
 }
