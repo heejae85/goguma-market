@@ -2,6 +2,8 @@
 
 옛 책을 넘기는 듯한 베이지 톤의 동네 중고거래 사이트 (Next.js 16 + Supabase 학습용)
 
+🌐 배포 주소: https://goguma-market-khaki.vercel.app
+
 ## 실행
 
 ```bash
@@ -31,8 +33,8 @@ http://localhost:3000 접속
 - `goguma_profiles` — 닉네임, 동네 (회원가입 시 트리거가 자동 생성)
 - SQL: `supabase/migrations/001_goguma_profiles.sql`
 
-## 배포 메모 (나중에)
+## 배포 (Vercel)
 
-- 가계부와 별도의 Vercel 프로젝트로 배포
-- 환경변수 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 등록
-- Supabase → Authentication → URL Configuration 의 Redirect URLs 에 배포 주소 `/auth/callback` 추가
+- Vercel 프로젝트 `goguma-market` (가계부와 별도), GitHub `main`에 push하면 자동 배포
+- 환경변수 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 등록 완료
+- 이메일 인증을 켜려면: Supabase → Authentication → URL Configuration 의 Redirect URLs 에 `https://goguma-market-khaki.vercel.app/auth/callback` 추가
