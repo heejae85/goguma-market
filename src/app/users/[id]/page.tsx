@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import PostCard from "@/components/PostCard";
+import ChatButton from "@/components/ChatButton";
+import { startChat } from "@/app/chats/actions";
 import { createClient } from "@/lib/supabase/server";
 import { POST_SELECT, countOf, formatDate, isUuid, type Post } from "@/lib/posts";
 
@@ -84,6 +86,12 @@ async function Profile({ rawId }: { rawId: string }) {
           <Link href="/mypage/profile" className="ghost-btn inline-block px-6 py-2 mt-6 text-sm">
             프로필 고치기
           </Link>
+        )}
+        {/* 다른 이웃이면 바로 채팅 (판매글과 상관없는 대화방) */}
+        {!isMe && auth.user && (
+          <div className="mt-6">
+            <ChatButton action={startChat.bind(null, profile.id, null)} label={`${profile.nickname} 님과 채팅하기`} />
+          </div>
         )}
       </div>
 

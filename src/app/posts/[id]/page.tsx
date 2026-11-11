@@ -12,6 +12,8 @@ import LikeButton from "./LikeButton";
 import CommentForm from "./CommentForm";
 import DeleteCommentButton from "./DeleteCommentButton";
 import { addComment, deleteComment } from "./interactions";
+import ChatButton from "@/components/ChatButton";
+import { startChat } from "@/app/chats/actions";
 
 export const metadata = { title: "장터 물건 · 고구마마켓" };
 
@@ -113,13 +115,25 @@ async function PostDetail({ rawId }: { rawId: string }) {
           React는 문자열을 자동으로 이스케이프하므로 HTML이 섞여 있어도 안전하다 */}
       <p className="whitespace-pre-wrap break-words leading-loose text-ink mt-8">{post.description}</p>
 
-      <div className="text-center mt-8">
+      <div className="flex flex-wrap items-start justify-center gap-3 mt-8">
         <LikeButton
           postId={post.id}
           initialLiked={liked}
           initialCount={countOf(post.likes)}
           loggedIn={!!me}
         />
+        {/* 구매자 → 판매자 채팅 (내 글에는 안 보임, 로그인 안 했으면 로그인으로) */}
+        {!isOwner &&
+          (me ? (
+            <ChatButton
+              action={startChat.bind(null, post.seller_id, post.id)}
+              label="판매자와 채팅하기"
+            />
+          ) : (
+            <Link href={`/login?next=/posts/${post.id}`} className="stamp-btn px-4 py-2">
+              ✉ 판매자와 채팅하기
+            </Link>
+          ))}
       </div>
 
       {isOwner && (

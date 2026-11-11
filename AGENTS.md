@@ -28,7 +28,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 2 | 판매글 CRUD (`/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`) — 사진 없음 | 완료 |
 | 3 | 판매글 사진 여러 장 (최대 10장, Storage `goguma-post-images`) | 완료 |
 | 4 | 좋아요·댓글, 작성자 프로필(`/users/[id]`: 사진·자기소개·글 모아보기), 프로필 고치기(`/mypage/profile`), 옛 그림 장식 | 완료 |
-| 5~ | (예정) | - |
+| 5 | 1:1 채팅(`/chats`, `/chats/[id]`): 판매자↔구매자, 접속 중인 이웃과, 실시간·읽음·안 읽은 수 | 완료 |
+| 6~ | (예정) | - |
 
 ## ⚠️ Supabase: 가계부 프로젝트와 DB를 같이 씀
 
@@ -83,6 +84,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 공통 카드·프로필 사진·옛 그림 | `src/components/PostCard.tsx`, `Avatar.tsx`, `OldPainting.tsx` |
 
 - 글에서 프로필로 가는 외래키가 여러 개(판매자·좋아요·댓글)라, 판매자 join은 `goguma_profiles!goguma_posts_seller_id_fkey`처럼 **외래키 이름을 꼭 적는다** (안 그러면 "관계가 모호" 에러로 목록이 안 나옴).
+- 채팅: 방(`goguma_chat_rooms`)은 두 사람을 `(작은 uuid, 큰 uuid)` 순서로 저장해 중복을 막는다(`startChat`, `src/app/chats/actions.ts`). 메시지는 브라우저에서 바로 insert하고 Realtime `postgres_changes`로 받는다(`ChatRoom.tsx`). Realtime 발행(`supabase_realtime`)에는 `goguma_chat_messages`만 들어 있다.
+- 접속 중 표시는 Realtime Presence 채널 `goguma-online`(`PresenceTracker`, `src/lib/presence.ts`). DB에 저장하지 않으며, 공개 채널이라 화면 표시용으로만 쓴다(권한 판단에 쓰지 않는다).
 - 옛 그림은 김홍도 「단원풍속도첩」(퍼블릭 도메인, Wikimedia Commons)을 `public/images/old/`에 둔 것이다.
 
 사진은 서버 액션(본문 1MB 제한)을 거치지 않고 브라우저에서 Storage의 `<내 uuid>/` 폴더로 바로 올린다. 서버에는 경로만 보내고 `isOwnImagePath`로 확인한다. 글을 고치면서 뺀 사진과 내린 글의 사진은 서버 액션이 Storage에서 지운다.

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
 import Avatar from "@/components/Avatar";
+import PresenceTracker from "@/components/PresenceTracker";
 
 // 헤더 자체(로고)는 정적으로 미리 그려두고,
 // 로그인 상태에 따라 바뀌는 메뉴만 요청 시점에 스트리밍한다 (Cache Components 방식)
@@ -49,17 +50,33 @@ async function UserNav() {
     );
   }
 
-  const { data: profile } = await supabase
-    .from("goguma_profiles")
-    .select("nickname, avatar_path")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { count: unread }] = await Promise.all([
+    supabase.from("goguma_profiles").select("nickname, avatar_path").eq("id", user.id).maybeSingle(),
+    // 안 읽은 편지 수 (RLS: 내 방의 메시지만 보이므로, 상대가 보냈고 안 읽은 것만 세면 된다)
+    supabase
+      .from("goguma_chat_messages")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null)
+      .neq("sender_id", user.id),
+  ]);
   const nickname = profile?.nickname ?? user.email;
 
   return (
     <nav className="flex items-center gap-2 sm:gap-3 text-sm">
+      {/* 고구마마켓 회원이면 "지금 접속 중"을 알린다 (화면에는 아무것도 그리지 않음) */}
+      {profile && (
+        <PresenceTracker me={{ id: user.id, nickname: profile.nickname, avatar_path: profile.avatar_path }} />
+      )}
       <Link href="/posts" className="text-ink hover:text-goguma">
         장터 구경
+      </Link>
+      <Link href="/chats" className="relative text-ink hover:text-goguma">
+        편지함
+        {!!unread && (
+          <span className="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-goguma text-page text-[10px] leading-4 text-center">
+            {unread > 99 ? "99+" : unread}
+          </span>
+        )}
       </Link>
       <Link href="/posts/new" className="stamp-btn px-3 py-1.5">
         글쓰기
