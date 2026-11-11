@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
-import { countOf, formatDate, formatPrice, imageUrl, type Post } from "@/lib/posts";
+import { CATEGORY_LABEL, countOf, formatDate, formatPrice, imageUrl, type Post } from "@/lib/posts";
 
 // 판매글 카드 한 장 (장터 목록, 프로필의 글 모아보기에서 함께 쓴다)
 export default function PostCard({ post, showSeller = true }: { post: Post; showSeller?: boolean }) {
@@ -38,9 +38,11 @@ export default function PostCard({ post, showSeller = true }: { post: Post; show
       </div>
       <div className="flex items-center justify-between gap-2 text-xs">
         <StatusBadge status={post.status} />
-        <span className="text-ink-soft">{formatDate(post.created_at)}</span>
+        {/* 끌어올리면 그 시각이 "올린 날"처럼 보인다 */}
+        <span className="text-ink-soft">{formatDate(post.bumped_at ?? post.created_at)}</span>
       </div>
-      <h2 className="font-title text-lg font-bold mt-3 line-clamp-2">{post.title}</h2>
+      <p className="text-[11px] text-sepia tracking-wider mt-3">{CATEGORY_LABEL[post.category] ?? "기타"}</p>
+      <h2 className="font-title text-lg font-bold mt-0.5 line-clamp-2">{post.title}</h2>
       <p className="text-goguma font-bold mt-2">{formatPrice(post.price)}</p>
       <div className="flex items-center justify-between gap-2 text-xs text-ink-soft mt-3 border-t border-line/60 pt-2">
         <span className="truncate">

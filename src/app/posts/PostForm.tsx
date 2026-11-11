@@ -6,6 +6,7 @@ import ImageUploader from "@/app/posts/ImageUploader";
 import { Field, Notice } from "@/components/BookCard";
 import type { PostFormState } from "@/app/posts/actions";
 import {
+  CATEGORIES,
   DESCRIPTION_MAX,
   POST_STATUSES,
   PRICE_MAX,
@@ -21,6 +22,7 @@ type Defaults = {
   description: string;
   status: string;
   image_paths: string;
+  category: string;
 };
 
 const splitPaths = (s?: string) => (s ? s.split("\n").filter(Boolean) : []);
@@ -72,6 +74,19 @@ export default function PostForm({
           defaultValue={v?.title}
           required
         />
+      </Field>
+
+      <Field label="물건 종류">
+        <select className="ink-input" name="category" defaultValue={v?.category ?? ""} required>
+          <option value="" disabled>
+            골라 주세요
+          </option>
+          {CATEGORIES.map(([k, label]) => (
+            <option key={k} value={k}>
+              {label}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <Field label="가격 (원)" hint="나눔이라면 0을 적어 주세요.">

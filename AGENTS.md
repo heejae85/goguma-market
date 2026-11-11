@@ -29,7 +29,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 3 | 판매글 사진 여러 장 (최대 10장, Storage `goguma-post-images`) | 완료 |
 | 4 | 좋아요·댓글, 작성자 프로필(`/users/[id]`: 사진·자기소개·글 모아보기), 프로필 고치기(`/mypage/profile`), 옛 그림 장식 | 완료 |
 | 5 | 1:1 채팅(`/chats`, `/chats/[id]`): 판매자↔구매자, 접속 중인 이웃과, 실시간·읽음·안 읽은 수 | 완료 |
-| 6~ | (예정) | - |
+| 6 | 검색·카테고리·정렬·거래완료 빼기·우리 동네만·쪽 나누기(`/posts`), 조회수, 끌어올리기, 판매 내역(`/mypage/sales`), 관심 목록(`/mypage/likes`) | 완료 |
+| 7~ | (예정) 거래완료 시 구매자 지정·거래 후기(매너 점수), 신고·차단, 알림 | - |
 
 ## ⚠️ Supabase: 가계부 프로젝트와 DB를 같이 씀
 
@@ -38,6 +39,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - 테이블: `ledgers`, `entries`
   - 함수: `mb_*` (`mb_get`, `mb_add_entry` 등)
   - Supabase advisor가 `mb_*` 함수에 "SECURITY DEFINER를 anon이 실행 가능" 경고를 띄우지만, 가계부의 **의도된 설계**(가계부 코드 방식)이므로 고치지 않는다.
+  - 고구마마켓의 `goguma_increment_view`(조회수 +1)도 같은 경고가 뜨지만 **의도된 공개 함수**다(로그인 안 한 사람도 글을 보므로). 조회수 1 올리기만 한다.
 - 고구마마켓 DB 객체는 **모두 `goguma_` 접두사**를 붙인다. (테이블, 함수, 트리거, 정책 이름)
 - `auth.users`(회원)는 두 앱이 **공유**한다.
   - 가입 트리거 `goguma_handle_new_user`는 `raw_user_meta_data.app = 'goguma'`인 사용자에게만 프로필을 만든다. 회원가입 시 `options.data.app = "goguma"`를 꼭 넣는다.
@@ -86,6 +88,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 글에서 프로필로 가는 외래키가 여러 개(판매자·좋아요·댓글)라, 판매자 join은 `goguma_profiles!goguma_posts_seller_id_fkey`처럼 **외래키 이름을 꼭 적는다** (안 그러면 "관계가 모호" 에러로 목록이 안 나옴).
 - 채팅: 방(`goguma_chat_rooms`)은 두 사람을 `(작은 uuid, 큰 uuid)` 순서로 저장해 중복을 막는다(`startChat`, `src/app/chats/actions.ts`). 메시지는 브라우저에서 바로 insert하고 Realtime `postgres_changes`로 받는다(`ChatRoom.tsx`). Realtime 발행(`supabase_realtime`)에는 `goguma_chat_messages`만 들어 있다.
 - 접속 중 표시는 Realtime Presence 채널 `goguma-online`(`PresenceTracker`, `src/lib/presence.ts`). DB에 저장하지 않으며, 공개 채널이라 화면 표시용으로만 쓴다(권한 판단에 쓰지 않는다).
+- 장터 목록 조건(검색어·카테고리·정렬·필터·쪽)은 모두 주소(`?q=&cat=&sort=&onsale=&near=&page=`)에 담는다. 검색어는 PostgREST 필터 문법과 섞이지 않게 `, ( ) % * \`를 빼고 쓴다.
+- 목록 "최신순"은 `bumped_at`(끌어올린 시각) 기준. `goguma_set_updated_at` 트리거는 제목·가격·설명·상태·사진·카테고리가 바뀔 때만 `updated_at`을 바꾼다(조회수·끌어올리기는 "(고침)" 아님).
 - 옛 그림은 김홍도 「단원풍속도첩」(퍼블릭 도메인, Wikimedia Commons)을 `public/images/old/`에 둔 것이다.
 
 사진은 서버 액션(본문 1MB 제한)을 거치지 않고 브라우저에서 Storage의 `<내 uuid>/` 폴더로 바로 올린다. 서버에는 경로만 보내고 `isOwnImagePath`로 확인한다. 글을 고치면서 뺀 사진과 내린 글의 사진은 서버 액션이 Storage에서 지운다.

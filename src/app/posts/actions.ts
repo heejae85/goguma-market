@@ -11,7 +11,10 @@ import {
   PRICE_MAX,
   TITLE_MAX,
   TITLE_MIN,
+  BUMP_INTERVAL_MS,
+  isCategory,
   isOwnImagePath,
+  type Category,
   type PostStatus,
 } from "@/lib/posts";
 
@@ -27,6 +30,7 @@ type PostData = {
   description: string;
   status: PostStatus;
   image_paths: string[];
+  category: Category;
 };
 
 type ParsedPost = { ok: true; data: PostData } | { ok: false; error: string };
@@ -34,7 +38,7 @@ type ParsedPost = { ok: true; data: PostData } | { ok: false; error: string };
 // 실패 시 폼에 다시 채워줄 입력값 (문자열 값만)
 function formValues(formData: FormData): Record<string, string> {
   const values: Record<string, string> = {};
-  for (const key of ["title", "price", "description", "status"]) {
+  for (const key of ["title", "price", "description", "status", "category"]) {
     values[key] = String(formData.get(key) ?? "");
   }
   values.image_paths = formData.getAll("image_paths").map(String).join("\n");
@@ -48,6 +52,7 @@ function parsePostForm(formData: FormData, userId: string): ParsedPost {
   const priceRaw = String(formData.get("price") ?? "").replace(/[,\s]/g, "");
   const description = String(formData.get("description") ?? "").trim();
   const statusRaw = String(formData.get("status") ?? "selling");
+  const categoryRaw = String(formData.get("category") ?? "");
   // 같은 이름(image_paths)의 hidden input이 여러 개 → getAll로 순서대로 받는다
   const imagePaths = formData.getAll("image_paths").map(String);
 
@@ -67,6 +72,9 @@ function parsePostForm(formData: FormData, userId: string): ParsedPost {
   if (!POST_STATUSES.includes(statusRaw as PostStatus)) {
     return { ok: false, error: "거래 상태가 올바르지 않습니다." };
   }
+  if (!isCategory(categoryRaw)) {
+    return { ok: false, error: "물건 종류(카테고리)를 골라 주세요." };
+  }
   if (imagePaths.length > IMAGE_MAX_COUNT) {
     return { ok: false, error: `사진은 최대 ${IMAGE_MAX_COUNT}장까지 올릴 수 있어요.` };
   }
@@ -77,7 +85,14 @@ function parsePostForm(formData: FormData, userId: string): ParsedPost {
 
   return {
     ok: true,
-    data: { title, price, description, status: statusRaw as PostStatus, image_paths: imagePaths },
+    data: {
+      title,
+      price,
+      description,
+      status: statusRaw as PostStatus,
+      image_paths: imagePaths,
+      category: categoryRaw,
+    },
   };
 }
 
@@ -109,10 +124,10 @@ export async function createPost(_prev: PostFormState, formData: FormData): Prom
   if (!parsed.ok) return { error: parsed.error, values: formValues(formData) };
 
   // 새 글은 항상 "판매중"으로 시작한다
-  const { title, price, description, image_paths } = parsed.data;
+  const { title, price, description, image_paths, category } = parsed.data;
   const { data, error } = await supabase
     .from("goguma_posts")
-    .insert({ seller_id: user.id, title, price, description, image_paths })
+    .insert({ seller_id: user.id, title, price, description, image_paths, category })
     .select("id")
     .single();
 
@@ -194,4 +209,42 @@ export async function deletePost(id: number) {
 
   revalidatePath("/posts");
   redirect("/posts");
+}
+
+/* ── 끌어올리기: 내 글을 목록 맨 위로 (하루에 한 번) ── */
+export type BumpState = { error?: string; ok?: boolean };
+
+// useActionState는 "이전 상태"를 두 번째 인자로 넘겨주므로 자리만 받아 둔다(쓰지는 않음)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function bumpPost(id: number, _prev: BumpState): Promise<BumpState> {
+  const { supabase, user } = await requireUser();
+  if (!user) redirect(`/login?next=/posts/${id}`);
+
+  const { data: post } = await supabase
+    .from("goguma_posts")
+    .select("bumped_at, status")
+    .eq("id", id)
+    .eq("seller_id", user.id)
+    .maybeSingle();
+  if (!post) return { error: "내가 쓴 글만 끌어올릴 수 있어요." };
+  if (post.status === "sold") return { error: "거래완료된 물건은 끌어올릴 수 없어요." };
+
+  // 너무 자주 끌어올리면 목록이 한 사람 글로 덮이므로 하루에 한 번만
+  const waited = Date.now() - new Date(post.bumped_at).getTime();
+  if (waited < BUMP_INTERVAL_MS) {
+    const hours = Math.ceil((BUMP_INTERVAL_MS - waited) / (60 * 60 * 1000));
+    return { error: `${hours}시간 뒤에 다시 끌어올릴 수 있어요.` };
+  }
+
+  // bumped_at만 바뀌므로 트리거가 updated_at을 건드리지 않는다 → "(고침)"이 붙지 않음
+  const { error } = await supabase
+    .from("goguma_posts")
+    .update({ bumped_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("seller_id", user.id);
+  if (error) return { error: "끌어올리지 못했어요. 잠시 후 다시 시도해 주세요." };
+
+  revalidatePath("/posts");
+  revalidatePath(`/posts/${id}`);
+  return { ok: true };
 }

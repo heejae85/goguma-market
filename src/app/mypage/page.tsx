@@ -61,6 +61,17 @@ async function ProfileDetails() {
 
       <div className="ornament my-6">✦</div>
 
+      <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
+        <Link href="/mypage/sales" className="ghost-btn py-3 text-center">
+          판매 내역
+        </Link>
+        <Link href="/mypage/likes" className="ghost-btn py-3 text-center">
+          관심 목록
+        </Link>
+        <Link href="/chats" className="ghost-btn py-3 text-center">
+          편지함
+        </Link>
+      </div>
       <div className="flex gap-3 mb-3">
         <Link href={`/users/${user.id}`} className="stamp-btn flex-1 py-3 text-center">
           내 장터 프로필

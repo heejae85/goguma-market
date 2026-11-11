@@ -4,8 +4,18 @@ import { notFound } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import StatusBadge from "@/components/StatusBadge";
 import { createClient } from "@/lib/supabase/server";
-import { POST_SELECT, countOf, formatDate, formatPrice, parsePostId, type Post } from "@/lib/posts";
-import { deletePost } from "@/app/posts/actions";
+import {
+  CATEGORY_LABEL,
+  POST_SELECT,
+  countOf,
+  formatDate,
+  formatPrice,
+  parsePostId,
+  type Post,
+} from "@/lib/posts";
+import { bumpPost, deletePost } from "@/app/posts/actions";
+import { after } from "next/server";
+import BumpButton from "./BumpButton";
 import DeletePostButton from "./DeletePostButton";
 import PhotoGallery from "./PhotoGallery";
 import LikeButton from "./LikeButton";
@@ -63,6 +73,11 @@ async function PostDetail({ rawId }: { rawId: string }) {
   ]);
   if (!data) notFound();
 
+  // 조회수 +1: after()로 응답을 보낸 "뒤에" 실행 → 화면이 조회수 올리기를 기다리지 않는다
+  after(async () => {
+    await supabase.rpc("goguma_increment_view", { p_post_id: id });
+  });
+
   const post = data as unknown as Post;
   const comments = (commentRows ?? []) as unknown as Comment[];
   const me = auth.user;
@@ -85,7 +100,15 @@ async function PostDetail({ rawId }: { rawId: string }) {
 
   return (
     <article>
-      <h1 className="font-title text-3xl font-extrabold text-center mt-2 break-all">{post.title}</h1>
+      <p className="text-center mt-3">
+        <Link
+          href={`/posts?cat=${post.category}`}
+          className="text-xs text-sepia tracking-wider underline-offset-2 hover:underline"
+        >
+          {CATEGORY_LABEL[post.category] ?? "기타"}
+        </Link>
+      </p>
+      <h1 className="font-title text-3xl font-extrabold text-center mt-1 break-all">{post.title}</h1>
       <div className="flex items-center justify-center gap-3 mt-4">
         <StatusBadge status={post.status} />
         <span className="text-xl font-bold text-goguma">{formatPrice(post.price)}</span>
@@ -107,6 +130,8 @@ async function PostDetail({ rawId }: { rawId: string }) {
             {post.seller?.region && `${post.seller.region} · `}
             {formatDate(post.created_at)}
             {edited && " (고침)"}
+            {/* 지금 보는 것까지 더해서 보여준다 (+1은 응답 뒤에 DB에 반영) */}
+            {` · 조회 ${post.view_count + 1}`}
           </span>
         </span>
       </Link>
@@ -146,6 +171,11 @@ async function PostDetail({ rawId }: { rawId: string }) {
             {/* bind로 id를 미리 묶은 서버 액션을 넘긴다 */}
             <DeletePostButton action={deletePost.bind(null, post.id)} />
           </div>
+          {post.status !== "sold" && (
+            <div className="mt-4">
+              <BumpButton action={bumpPost.bind(null, post.id)} />
+            </div>
+          )}
         </>
       )}
 

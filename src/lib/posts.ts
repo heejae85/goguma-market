@@ -12,6 +12,35 @@ export const STATUS_LABEL: Record<PostStatus, string> = {
   sold: "거래완료",
 };
 
+/* ── 카테고리 (DB check 제약과 같은 값) ── */
+export const CATEGORIES = [
+  ["digital", "디지털기기"],
+  ["furniture", "가구·인테리어"],
+  ["kitchen", "생활·주방"],
+  ["fashion", "의류·잡화"],
+  ["books", "도서·음반"],
+  ["hobby", "취미·수집"],
+  ["sports", "스포츠·레저"],
+  ["kids", "유아동"],
+  ["plants", "식물·먹거리"],
+  ["etc", "기타"],
+] as const;
+export type Category = (typeof CATEGORIES)[number][0];
+export const CATEGORY_LABEL = Object.fromEntries(CATEGORIES) as Record<Category, string>;
+export const isCategory = (v: string): v is Category => v in CATEGORY_LABEL;
+
+/* ── 목록 정렬 ── */
+export const SORTS = [
+  ["recent", "최신순"],
+  ["price_asc", "낮은 가격순"],
+  ["price_desc", "높은 가격순"],
+  ["views", "많이 본 순"],
+] as const;
+export type SortKey = (typeof SORTS)[number][0];
+
+// 끌어올리기는 하루에 한 번
+export const BUMP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
 // DB 제약과 같은 한도 (폼 maxLength, 서버 검증에서 함께 사용)
 export const TITLE_MIN = 2;
 export const TITLE_MAX = 40;
@@ -44,6 +73,10 @@ export type Post = {
   status: PostStatus;
   // 사진 경로 목록 (첫 장이 대표 사진)
   image_paths: string[];
+  category: Category;
+  view_count: number;
+  // 끌어올린 시각 (목록 "최신순" 기준)
+  bumped_at: string;
   created_at: string;
   updated_at: string;
   // goguma_profiles를 외래키로 함께 불러온 값 (작성자 정보)
@@ -59,7 +92,7 @@ export type Post = {
 // "!goguma_posts_seller_id_fkey" → 글에서 프로필로 가는 길이 여러 개(판매자, 좋아요 누른 사람, 댓글 쓴 사람)라
 //   어느 외래키로 이을지 이름으로 콕 집어 준다. (안 그러면 "관계가 모호하다"는 에러)
 export const POST_SELECT =
-  "id, seller_id, title, price, description, status, image_paths, created_at, updated_at, " +
+  "id, seller_id, title, price, description, status, image_paths, category, view_count, bumped_at, created_at, updated_at, " +
   "seller:goguma_profiles!goguma_posts_seller_id_fkey(nickname, region, avatar_path), " +
   "likes:goguma_post_likes(count), comments:goguma_comments(count)";
 

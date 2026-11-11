@@ -33,7 +33,7 @@ async function EditPostForm({ rawId }: { rawId: string }) {
 
   const { data: post } = await supabase
     .from("goguma_posts")
-    .select("id, seller_id, title, price, description, status, image_paths")
+    .select("id, seller_id, title, price, description, status, image_paths, category")
     .eq("id", id)
     .maybeSingle();
   if (!post) notFound();
@@ -50,6 +50,7 @@ async function EditPostForm({ rawId }: { rawId: string }) {
         description: post.description,
         status: post.status,
         image_paths: (post.image_paths as string[]).join("\n"),
+        category: post.category,
       }}
       showStatus
       submitLabel="고친 내용 저장"
