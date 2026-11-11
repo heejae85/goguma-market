@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { POST_SELECT, formatDate, formatPrice, parsePostId, type Post } from "@/lib/posts";
 import { deletePost } from "@/app/posts/actions";
 import DeletePostButton from "./DeletePostButton";
+import PhotoGallery from "./PhotoGallery";
 
 export const metadata = { title: "장터 물건 · 고구마마켓" };
 
@@ -53,6 +54,8 @@ async function PostDetail({ rawId }: { rawId: string }) {
         <StatusBadge status={post.status} />
         <span className="text-xl font-bold text-goguma">{formatPrice(post.price)}</span>
       </div>
+
+      <PhotoGallery paths={post.image_paths} title={post.title} />
 
       <div className="ornament my-6">❦</div>
 

@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import StatusBadge from "@/components/StatusBadge";
-import { POST_SELECT, formatDate, formatPrice, type Post } from "@/lib/posts";
+import Image from "next/image";
+import { POST_SELECT, formatDate, formatPrice, imageUrl, type Post } from "@/lib/posts";
 
 export const metadata = { title: "장터 구경 · 고구마마켓" };
 
@@ -64,6 +65,29 @@ async function PostList() {
               post.status === "sold" ? "opacity-60" : ""
             }`}
           >
+            {/* 대표 사진(첫 장). 사진이 없으면 책 장식으로 자리를 채운다 */}
+            <div className="relative aspect-[4/3] mb-4 border border-line bg-paper-deep/40 overflow-hidden">
+              {post.image_paths.length > 0 ? (
+                <>
+                  <Image
+                    src={imageUrl(post.image_paths[0])}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                    className="object-cover"
+                  />
+                  {post.image_paths.length > 1 && (
+                    <span className="absolute right-1.5 bottom-1.5 bg-ink/70 text-page text-[11px] px-1.5">
+                      ❐ {post.image_paths.length}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="absolute inset-0 flex items-center justify-center text-3xl text-line">
+                  ❦
+                </span>
+              )}
+            </div>
             <div className="flex items-center justify-between gap-2 text-xs">
               <StatusBadge status={post.status} />
               <span className="text-ink-soft">{formatDate(post.created_at)}</span>

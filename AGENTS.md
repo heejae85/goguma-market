@@ -26,7 +26,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | --- | --- | --- |
 | 1 | 회원가입 / 로그인 / 로그아웃, 내 정보(`/mypage`) | 완료 |
 | 2 | 판매글 CRUD (`/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`) — 사진 없음 | 완료 |
-| 3~ | (예정) 판매글 사진 등 | - |
+| 3 | 판매글 사진 여러 장 (최대 10장, Storage `goguma-post-images`) | 완료 |
+| 4~ | (예정) | - |
 
 ## ⚠️ Supabase: 가계부 프로젝트와 DB를 같이 씀
 
@@ -46,6 +47,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 스키마 변경은 MCP `apply_migration`으로 적용하고, **같은 SQL을 `supabase/migrations/NNN_이름.sql`에 번호순으로 저장**한다.
 - `DROP`, `DELETE`, `TRUNCATE` 등 되돌릴 수 없는 SQL은 실행 전에 사용자에게 확인한다.
 - 테스트 계정은 `goguma-devtest*@example.com` 형식으로 만들고, **테스트가 끝나면 삭제**한다. 실제 사람 메일 주소(gmail 등)는 쓰지 않는다.
+- 샘플 데이터: `goguma-sample1~6@example.com` 계정(닉네임 군고구마할매·책방주인 등)과 그 판매글 42개는 화면 확인용으로 **일부러 남겨 둔 것**이다. 내용은 `supabase/seed/sample_posts.sql`, 지우는 SQL은 그 파일 맨 아래에 있다(지우기 전 사용자 확인).
 - publishable 키는 브라우저 공개용이라 노출돼도 되지만, `.env.local`은 커밋하지 않는다. (`.env.example` 참고)
 
 ## ⚠️ Next.js 16에서 주의할 점 (예전 버전과 다름)
@@ -73,6 +75,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 서버용 Supabase 클라이언트 | `src/lib/supabase/server.ts` |
 | 로그인 필요한 경로 목록 | `PROTECTED_PATHS`, `PROTECTED_PATTERNS`(정규식, 예: `/posts/[id]/edit`) (`src/lib/supabase/proxy.ts`) |
 | 판매글 서버 액션 / 공통 도우미 | `src/app/posts/actions.ts`, `src/lib/posts.ts` |
+| 사진 올리기 (브라우저 → Storage 직접) | `src/app/posts/ImageUploader.tsx`, `src/lib/supabase/client.ts`, `src/lib/resizeImage.ts` |
+
+사진은 서버 액션(본문 1MB 제한)을 거치지 않고 브라우저에서 Storage의 `<내 uuid>/` 폴더로 바로 올린다. 서버에는 경로만 보내고 `isOwnImagePath`로 확인한다. 글을 고치면서 뺀 사진과 내린 글의 사진은 서버 액션이 Storage에서 지운다.
 
 새로 로그인이 필요한 페이지를 만들면 `PROTECTED_PATHS`에 추가하고, 페이지 안에서도 `getUser()`로 한 번 더 확인한다.
 

@@ -26,5 +26,7 @@ async function NewPostForm() {
   // proxy.ts에서도 막지만, 페이지에서 한 번 더 확인
   if (!user) redirect("/login?next=/posts/new");
 
-  return <PostForm action={createPost} submitLabel="장터에 내놓기" cancelHref="/posts" />;
+  return (
+    <PostForm action={createPost} userId={user.id} submitLabel="장터에 내놓기" cancelHref="/posts" />
+  );
 }
