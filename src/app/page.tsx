@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import OldPainting from "@/components/OldPainting";
 
 export default function Home() {
   return (
@@ -13,6 +14,13 @@ export default function Home() {
 
       <div className="ornament my-8">❦</div>
 
+      {/* 옛 그림: 김홍도 〈씨름〉 — 장터에 모인 사람들의 북적임 */}
+      <OldPainting
+        name="ssireum"
+        className="w-44 sm:w-52 float-none sm:float-right mx-auto sm:ml-6 mb-6 rotate-1"
+        sizes="208px"
+      />
+
       <p className="drop-cap text-left leading-loose text-ink">
         옛날 옛적, 장날이면 이웃들이 저마다 쓰던 물건을 들고 나와 서로 바꾸고
         나누었습니다. 고구마마켓은 그 정겨운 장터를 한 권의 책에 담았습니다.
@@ -20,7 +28,7 @@ export default function Home() {
         거래를 시작해 보세요.
       </p>
 
-      <div className="ornament my-8">✦</div>
+      <div className="ornament my-8 clear-both">✦</div>
 
       {/* 로그인 여부에 따라 달라지는 부분만 요청 시점에 그린다 */}
       <Suspense fallback={<p className="text-ink-soft italic">책장을 펼치는 중…</p>}>

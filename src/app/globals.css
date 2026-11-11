@@ -134,6 +134,31 @@ body {
   color: var(--page);
 }
 
+/* 옛 그림 액자: 표구한 족자처럼 종이 테두리 + 그림자, 살짝 바랜 색 */
+.old-painting {
+  background: var(--page);
+  border: 1px solid var(--line);
+  padding: 6px 6px 4px;
+  box-shadow: 3px 3px 0 var(--paper-deep), 0 8px 20px -10px rgba(80, 50, 20, 0.45);
+}
+.old-painting img {
+  filter: sepia(0.25) saturate(0.9);
+}
+
+/* 낙관(도장) 모양: 네모난 붉은 인장 */
+.seal {
+  display: inline-block;
+  border: 2px solid var(--goguma);
+  color: var(--goguma);
+  padding: 0.15em 0.35em;
+  font-family: var(--font-nanum), serif;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  transform: rotate(-4deg);
+  opacity: 0.85;
+}
+
 /* 첫 글자 크게 (옛 책 장식 머리글자) */
 .drop-cap::first-letter {
   float: left;

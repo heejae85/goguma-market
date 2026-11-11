@@ -1,9 +1,12 @@
 // 브라우저에서 사진을 올리기 전에 크기를 줄인다 (휴대폰 사진은 한 장에 몇 MB라서)
 // - 긴 쪽을 최대 1600px로 줄이고 WebP로 바꿔 용량을 크게 줄인다
 // - GIF는 움직이는 그림이 깨지지 않도록 그대로 둔다
-const MAX_SIDE = 1600;
-
-export async function resizeImage(file: File): Promise<{ blob: Blob; ext: string }> {
+// maxSide: 판매글 사진은 1600px, 프로필 사진은 작게(400px) 쓴다
+export async function resizeImage(
+  file: File,
+  maxSide = 1600,
+): Promise<{ blob: Blob; ext: string }> {
+  const MAX_SIDE = maxSide;
   if (file.type === "image/gif") return { blob: file, ext: "gif" };
 
   // createImageBitmap: 사진 파일을 그림 데이터로 읽는다 (휴대폰 사진의 회전 정보도 반영)

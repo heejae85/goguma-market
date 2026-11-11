@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
+import Avatar from "@/components/Avatar";
 
 // 헤더 자체(로고)는 정적으로 미리 그려두고,
 // 로그인 상태에 따라 바뀌는 메뉴만 요청 시점에 스트리밍한다 (Cache Components 방식)
@@ -50,7 +51,7 @@ async function UserNav() {
 
   const { data: profile } = await supabase
     .from("goguma_profiles")
-    .select("nickname")
+    .select("nickname, avatar_path")
     .eq("id", user.id)
     .maybeSingle();
   const nickname = profile?.nickname ?? user.email;
@@ -63,8 +64,11 @@ async function UserNav() {
       <Link href="/posts/new" className="stamp-btn px-3 py-1.5">
         글쓰기
       </Link>
-      <Link href="/mypage" className="text-ink hover:text-goguma">
-        <span className="font-bold">{nickname}</span> 님
+      <Link href="/mypage" className="flex items-center gap-1.5 text-ink hover:text-goguma">
+        <Avatar path={profile?.avatar_path} nickname={nickname ?? "?"} size={28} />
+        <span className="hidden sm:inline">
+          <span className="font-bold">{nickname}</span> 님
+        </span>
       </Link>
       <LogoutButton className="px-3 py-1.5" />
     </nav>

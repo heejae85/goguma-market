@@ -34,7 +34,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </main>
         <footer className="text-center text-sm text-ink-soft py-8 font-title">
           <div className="ornament max-w-xs mx-auto mb-2">❦</div>
-          고구마마켓 · 제 一 권 · 회원편
+          고구마마켓 · 제 一 권 · 장터편 <span className="seal text-xs ml-1">薯市</span>
+          <p className="text-[10px] mt-2 tracking-wider">
+            그림: 김홍도 「단원풍속도첩」(18세기, 퍼블릭 도메인)
+          </p>
         </footer>
       </body>
     </html>

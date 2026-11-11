@@ -46,13 +46,38 @@ export type Post = {
   created_at: string;
   updated_at: string;
   // goguma_profiles를 외래키로 함께 불러온 값 (작성자 정보)
-  seller: { nickname: string; region: string } | null;
+  seller: { nickname: string; region: string; avatar_path: string | null } | null;
+  // 좋아요·댓글 개수 (PostgREST의 "관계(count)" 문법은 [{ count: n }] 모양으로 돌려준다)
+  likes: { count: number }[];
+  comments: { count: number }[];
 };
 
 // 판매글을 불러올 때 쓰는 select 문
-// "seller:goguma_profiles(...)" → seller_id 외래키를 따라 작성자 닉네임/동네를 join해서 seller라는 이름으로 받는다
+// "seller:goguma_profiles(...)" → seller_id 외래키를 따라 작성자 정보를 join해서 seller라는 이름으로 받는다
+// "likes:goguma_post_likes(count)" → 이 글을 가리키는 좋아요 행의 개수만 센다 (행 전체를 내려받지 않음)
+// "!goguma_posts_seller_id_fkey" → 글에서 프로필로 가는 길이 여러 개(판매자, 좋아요 누른 사람, 댓글 쓴 사람)라
+//   어느 외래키로 이을지 이름으로 콕 집어 준다. (안 그러면 "관계가 모호하다"는 에러)
 export const POST_SELECT =
-  "id, seller_id, title, price, description, status, image_paths, created_at, updated_at, seller:goguma_profiles(nickname, region)";
+  "id, seller_id, title, price, description, status, image_paths, created_at, updated_at, " +
+  "seller:goguma_profiles!goguma_posts_seller_id_fkey(nickname, region, avatar_path), " +
+  "likes:goguma_post_likes(count), comments:goguma_comments(count)";
+
+export const countOf = (rel: { count: number }[] | undefined) => rel?.[0]?.count ?? 0;
+
+/* ── 프로필 사진 ── */
+export const AVATAR_BUCKET = "goguma-avatars";
+export const BIO_MAX = 300;
+
+export function avatarUrl(path: string): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${AVATAR_BUCKET}/${path}`;
+}
+
+// 사용자 id(uuid) 모양 확인: /users/[id] 주소에 이상한 값이 들어오는 것 방지
+export function isUuid(raw: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(raw);
+}
+
+export const COMMENT_MAX = 500;
 
 export function formatPrice(price: number): string {
   return price === 0 ? "나눔 🍠" : `${price.toLocaleString("ko-KR")}원`;

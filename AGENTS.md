@@ -27,7 +27,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 1 | 회원가입 / 로그인 / 로그아웃, 내 정보(`/mypage`) | 완료 |
 | 2 | 판매글 CRUD (`/posts`, `/posts/new`, `/posts/[id]`, `/posts/[id]/edit`) — 사진 없음 | 완료 |
 | 3 | 판매글 사진 여러 장 (최대 10장, Storage `goguma-post-images`) | 완료 |
-| 4~ | (예정) | - |
+| 4 | 좋아요·댓글, 작성자 프로필(`/users/[id]`: 사진·자기소개·글 모아보기), 프로필 고치기(`/mypage/profile`), 옛 그림 장식 | 완료 |
+| 5~ | (예정) | - |
 
 ## ⚠️ Supabase: 가계부 프로젝트와 DB를 같이 씀
 
@@ -76,6 +77,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 로그인 필요한 경로 목록 | `PROTECTED_PATHS`, `PROTECTED_PATTERNS`(정규식, 예: `/posts/[id]/edit`) (`src/lib/supabase/proxy.ts`) |
 | 판매글 서버 액션 / 공통 도우미 | `src/app/posts/actions.ts`, `src/lib/posts.ts` |
 | 사진 올리기 (브라우저 → Storage 직접) | `src/app/posts/ImageUploader.tsx`, `src/lib/supabase/client.ts`, `src/lib/resizeImage.ts` |
+
+| 좋아요·댓글 서버 액션 | `src/app/posts/[id]/interactions.ts` |
+| 프로필 고치기 서버 액션 | `src/app/mypage/actions.ts` |
+| 공통 카드·프로필 사진·옛 그림 | `src/components/PostCard.tsx`, `Avatar.tsx`, `OldPainting.tsx` |
+
+- 글에서 프로필로 가는 외래키가 여러 개(판매자·좋아요·댓글)라, 판매자 join은 `goguma_profiles!goguma_posts_seller_id_fkey`처럼 **외래키 이름을 꼭 적는다** (안 그러면 "관계가 모호" 에러로 목록이 안 나옴).
+- 옛 그림은 김홍도 「단원풍속도첩」(퍼블릭 도메인, Wikimedia Commons)을 `public/images/old/`에 둔 것이다.
 
 사진은 서버 액션(본문 1MB 제한)을 거치지 않고 브라우저에서 Storage의 `<내 uuid>/` 폴더로 바로 올린다. 서버에는 경로만 보내고 `isOwnImagePath`로 확인한다. 글을 고치면서 뺀 사진과 내린 글의 사진은 서버 액션이 Storage에서 지운다.
 

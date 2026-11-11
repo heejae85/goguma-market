@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       new URL(
         "https://ljfgbhptxymixjkqlero.supabase.co/storage/v1/object/public/goguma-post-images/**",
       ),
+      // 프로필 사진 버킷
+      new URL("https://ljfgbhptxymixjkqlero.supabase.co/storage/v1/object/public/goguma-avatars/**"),
     ],
   },
   turbopack: {
