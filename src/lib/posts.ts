@@ -1,4 +1,5 @@
 // 판매글에서 여러 화면이 같이 쓰는 타입·상수·도우미 함수
+import { formatKstDate } from "@/lib/time";
 
 export type PostStatus = "selling" | "reserved" | "sold";
 
@@ -83,13 +84,8 @@ export function formatPrice(price: number): string {
   return price === 0 ? "나눔 🍠" : `${price.toLocaleString("ko-KR")}원`;
 }
 
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+// 한국 시간 기준 날짜 (서버가 UTC여도 날짜가 하루 밀리지 않게) — src/lib/time.ts 참고
+export const formatDate = formatKstDate;
 
 // URL의 [id]는 문자열이므로, 숫자 id인지 확인한 뒤 변환한다 (잘못된 값이면 null)
 export function parsePostId(raw: string): number | null {

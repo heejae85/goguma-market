@@ -1,4 +1,5 @@
 // 채팅에서 함께 쓰는 타입과 select 문
+import { formatKstChatTime } from "@/lib/time";
 
 export type ChatProfile = { id: string; nickname: string; avatar_path: string | null };
 
@@ -36,12 +37,5 @@ export function partnerOf(room: ChatRoomRow, meId: string): ChatProfile | null {
   return room.user_a === meId ? room.b : room.a;
 }
 
-// 짧은 시간 표시: 오늘이면 "오후 3:12", 아니면 "11월 9일"
-export function formatChatTime(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  return sameDay
-    ? d.toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" })
-    : d.toLocaleDateString("ko-KR", { month: "long", day: "numeric" });
-}
+// 짧은 시간 표시: 오늘이면 "오후 3:12", 아니면 "11월 9일" — 항상 한국 시간 (src/lib/time.ts)
+export const formatChatTime = formatKstChatTime;

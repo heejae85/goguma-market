@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import { formatKstDate } from "@/lib/time";
 import BookCard from "@/components/BookCard";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
@@ -32,11 +33,8 @@ async function ProfileDetails() {
     .eq("id", user.id)
     .maybeSingle();
 
-  const joined = new Date(profile?.created_at ?? user.created_at).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // 한국 시간 기준 가입일 (서버는 UTC라 직접 시간대를 지정한다)
+  const joined = formatKstDate(profile?.created_at ?? user.created_at);
 
   const rows: [string, string][] = [
     ["닉네임", profile?.nickname ?? "—"],
