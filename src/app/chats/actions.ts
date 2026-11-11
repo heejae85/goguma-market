@@ -16,6 +16,10 @@ export async function startChat(partnerId: string, postId: number | null) {
   // 서버 액션 인자는 브라우저에서 조작될 수 있으므로 모양을 확인한다
   if (!isUuid(partnerId) || partnerId === user.id) redirect(back);
 
+  // 차단된 사이면 방을 만들지 않는다 (DB 정책도 막지만, 알아듣기 쉬운 안내를 위해 먼저 확인)
+  const { data: blocked } = await supabase.rpc("goguma_blocked_with", { p_other: partnerId });
+  if (blocked) redirect(`${back}?chat=blocked`);
+
   // 두 사람을 항상 (작은 id, 큰 id) 순서로 → DB의 check(user_a < user_b)·중복 방지와 맞춘다
   const [user_a, user_b] = [user.id, partnerId].sort();
 

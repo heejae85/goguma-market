@@ -79,19 +79,36 @@ async function PostDetail({ rawId }: { rawId: string }) {
   });
 
   const post = data as unknown as Post;
-  const comments = (commentRows ?? []) as unknown as Comment[];
   const me = auth.user;
 
-  // 내가 이 글에 좋아요를 눌렀는지 (로그인했을 때만 확인)
+  // 로그인했으면: 좋아요 여부, 내가 차단한 사람들, (거래완료 글이면) 내가 남긴 후기 여부
   let liked = false;
+  let blockedIds = new Set<string>();
+  let reviewedByMe = false;
   if (me) {
-    const { count } = await supabase
-      .from("goguma_post_likes")
-      .select("post_id", { count: "exact", head: true })
-      .eq("post_id", id)
-      .eq("user_id", me.id);
+    const [{ count }, { data: blocks }, { count: reviewCount }] = await Promise.all([
+      supabase
+        .from("goguma_post_likes")
+        .select("post_id", { count: "exact", head: true })
+        .eq("post_id", id)
+        .eq("user_id", me.id),
+      supabase.from("goguma_blocks").select("blocked_id").eq("blocker_id", me.id),
+      supabase
+        .from("goguma_reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("post_id", id)
+        .eq("reviewer_id", me.id),
+    ]);
     liked = (count ?? 0) > 0;
+    blockedIds = new Set((blocks ?? []).map((b) => b.blocked_id));
+    reviewedByMe = (reviewCount ?? 0) > 0;
   }
+  // 내가 차단한 이웃의 댓글은 보이지 않게
+  const comments = ((commentRows ?? []) as unknown as Comment[]).filter((c) => !blockedIds.has(c.author_id));
+  const sellerBlocked = blockedIds.has(post.seller_id);
+  // 거래 당사자(판매자·구매자)이고 아직 후기를 안 남겼으면 후기 버튼
+  const iAmBuyer = !!me && post.buyer_id === me.id;
+  const canReview = post.status === "sold" && !!post.buyer_id && !reviewedByMe && (iAmBuyer || me?.id === post.seller_id);
 
   // 수정/삭제 버튼은 작성자에게만 보여준다 (실제 권한 확인은 서버 액션 + RLS가 담당)
   const isOwner = me?.id === post.seller_id;
@@ -147,8 +164,9 @@ async function PostDetail({ rawId }: { rawId: string }) {
           initialCount={countOf(post.likes)}
           loggedIn={!!me}
         />
-        {/* 구매자 → 판매자 채팅 (내 글에는 안 보임, 로그인 안 했으면 로그인으로) */}
+        {/* 구매자 → 판매자 채팅 (내 글에는 안 보임, 로그인 안 했으면 로그인으로, 차단한 사람이면 숨김) */}
         {!isOwner &&
+          !sellerBlocked &&
           (me ? (
             <ChatButton
               action={startChat.bind(null, post.seller_id, post.id)}
@@ -161,6 +179,31 @@ async function PostDetail({ rawId }: { rawId: string }) {
           ))}
       </div>
 
+      {sellerBlocked && (
+        <p className="text-center text-sm text-ink-soft mt-4">
+          내가 차단한 이웃의 글이에요. 채팅할 수 없어요.
+        </p>
+      )}
+
+      {/* 거래완료 + 구매자가 정해진 글: 거래 당사자에게 후기 안내 */}
+      {canReview && (
+        <div className="mt-6 text-center border border-goguma/40 bg-goguma/5 px-4 py-4">
+          <p className="text-sm text-ink">거래가 끝났어요. {iAmBuyer ? "판매자" : "구매자"}에게 후기를 남겨 주세요.</p>
+          <Link href={`/posts/${post.id}/review`} className="stamp-btn inline-block px-5 py-2 mt-3 text-sm">
+            ✎ 거래 후기 남기기
+          </Link>
+        </div>
+      )}
+
+      {/* 신고: 로그인한 다른 사람에게만 */}
+      {me && !isOwner && (
+        <p className="text-right mt-6">
+          <Link href={`/report?post=${post.id}`} className="text-xs text-ink-soft underline underline-offset-2 hover:text-goguma">
+            이 글 신고하기
+          </Link>
+        </p>
+      )}
+
       {isOwner && (
         <>
           <div className="ornament my-8">✦</div>
@@ -172,7 +215,11 @@ async function PostDetail({ rawId }: { rawId: string }) {
             <DeletePostButton action={deletePost.bind(null, post.id)} />
           </div>
           {post.status !== "sold" && (
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col items-center gap-3">
+              {/* 거래가 끝나면: 채팅한 이웃 중 구매자를 고르고 후기로 이어진다 */}
+              <Link href={`/posts/${post.id}/complete`} className="ghost-btn px-5 py-2 text-sm">
+                ✔ 거래 완료하기
+              </Link>
               <BumpButton action={bumpPost.bind(null, post.id)} />
             </div>
           )}

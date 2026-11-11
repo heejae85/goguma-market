@@ -48,6 +48,8 @@ async function Room({ rawId }: { rawId: string }) {
   const room = roomRow as unknown as ChatRoomRow;
   const partner = partnerOf(room, user.id);
   if (!partner) notFound();
+  // 둘 사이에 (어느 쪽이든) 차단이 있으면 입력칸을 막는다 (DB 정책도 메시지 보내기를 막음)
+  const { data: blocked } = await supabase.rpc("goguma_blocked_with", { p_other: partner.id });
   const role = room.post ? (room.post.seller_id === user.id ? "판매" : "구매") : null;
 
   return (
@@ -95,6 +97,7 @@ async function Room({ rawId }: { rawId: string }) {
         roomId={room.id}
         meId={user.id}
         partner={partner}
+        blocked={!!blocked}
         initialMessages={(messageRows ?? []) as ChatMessage[]}
       />
     </>

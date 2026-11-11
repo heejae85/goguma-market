@@ -14,11 +14,14 @@ export default function ChatRoom({
   roomId,
   meId,
   partner,
+  blocked = false,
   initialMessages,
 }: {
   roomId: number;
   meId: string;
   partner: ChatProfile;
+  // 둘 사이에 차단이 있으면 편지를 보낼 수 없다
+  blocked?: boolean;
   initialMessages: ChatMessage[];
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -162,6 +165,11 @@ export default function ChatRoom({
         <div ref={bottomRef} />
       </div>
 
+      {blocked ? (
+        <p className="mt-3 text-center text-sm text-ink-soft border border-line bg-paper/50 py-3">
+          차단된 사이라 편지를 보낼 수 없어요.
+        </p>
+      ) : (
       <form
         className="mt-3 flex gap-2 items-end"
         onSubmit={(e) => {
@@ -188,6 +196,7 @@ export default function ChatRoom({
           {sending ? "…" : "보내기"}
         </button>
       </form>
+      )}
       {error && <p className="text-xs text-goguma mt-1">{error}</p>}
     </div>
   );

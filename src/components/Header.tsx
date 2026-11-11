@@ -50,7 +50,7 @@ async function UserNav() {
     );
   }
 
-  const [{ data: profile }, { count: unread }] = await Promise.all([
+  const [{ data: profile }, { count: unread }, { count: news }] = await Promise.all([
     supabase.from("goguma_profiles").select("nickname, avatar_path").eq("id", user.id).maybeSingle(),
     // 안 읽은 편지 수 (RLS: 내 방의 메시지만 보이므로, 상대가 보냈고 안 읽은 것만 세면 된다)
     supabase
@@ -58,6 +58,11 @@ async function UserNav() {
       .select("id", { count: "exact", head: true })
       .is("read_at", null)
       .neq("sender_id", user.id),
+    // 안 읽은 소식(알림) 수 — RLS: 내 알림만 보인다
+    supabase
+      .from("goguma_notifications")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null),
   ]);
   const nickname = profile?.nickname ?? user.email;
 
@@ -75,6 +80,14 @@ async function UserNav() {
         {!!unread && (
           <span className="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-goguma text-page text-[10px] leading-4 text-center">
             {unread > 99 ? "99+" : unread}
+          </span>
+        )}
+      </Link>
+      <Link href="/notifications" className="relative text-ink hover:text-goguma">
+        소식
+        {!!news && (
+          <span className="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-goguma text-page text-[10px] leading-4 text-center">
+            {news > 99 ? "99+" : news}
           </span>
         )}
       </Link>

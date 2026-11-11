@@ -71,6 +71,15 @@ async function ProfileDetails() {
         <Link href="/chats" className="ghost-btn py-3 text-center">
           편지함
         </Link>
+        <Link href="/notifications" className="ghost-btn py-3 text-center">
+          소식
+        </Link>
+        <Link href="/mypage/blocks" className="ghost-btn py-3 text-center">
+          차단한 이웃
+        </Link>
+        <Link href={`/users/${user.id}#reviews`} className="ghost-btn py-3 text-center">
+          받은 후기
+        </Link>
       </div>
       <div className="flex gap-3 mb-3">
         <Link href={`/users/${user.id}`} className="stamp-btn flex-1 py-3 text-center">

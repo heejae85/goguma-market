@@ -30,7 +30,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 4 | 좋아요·댓글, 작성자 프로필(`/users/[id]`: 사진·자기소개·글 모아보기), 프로필 고치기(`/mypage/profile`), 옛 그림 장식 | 완료 |
 | 5 | 1:1 채팅(`/chats`, `/chats/[id]`): 판매자↔구매자, 접속 중인 이웃과, 실시간·읽음·안 읽은 수 | 완료 |
 | 6 | 검색·카테고리·정렬·거래완료 빼기·우리 동네만·쪽 나누기(`/posts`), 조회수, 끌어올리기, 판매 내역(`/mypage/sales`), 관심 목록(`/mypage/likes`) | 완료 |
-| 7~ | (예정) 거래완료 시 구매자 지정·거래 후기(매너 점수), 신고·차단, 알림 | - |
+| 7 | 거래완료 시 구매자 지정(`/posts/[id]/complete`)·거래 후기(`/posts/[id]/review`)·인심 지수, 신고(`/report`), 차단(`/mypage/blocks`), 알림(`/notifications`) | 완료 |
+| 8~ | (예정) | - |
 
 ## ⚠️ Supabase: 가계부 프로젝트와 DB를 같이 씀
 
@@ -40,6 +41,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - 함수: `mb_*` (`mb_get`, `mb_add_entry` 등)
   - Supabase advisor가 `mb_*` 함수에 "SECURITY DEFINER를 anon이 실행 가능" 경고를 띄우지만, 가계부의 **의도된 설계**(가계부 코드 방식)이므로 고치지 않는다.
   - 고구마마켓의 `goguma_increment_view`(조회수 +1)도 같은 경고가 뜨지만 **의도된 공개 함수**다(로그인 안 한 사람도 글을 보므로). 조회수 1 올리기만 한다.
+  - `goguma_blocked_with(상대)`도 "로그인 사용자가 실행 가능" 경고가 뜨지만 **의도된 것**이다(채팅 RLS 정책이 써야 함). 항상 "나와 상대" 사이만 확인하므로 남들끼리의 차단은 알아낼 수 없다.
 - 고구마마켓 DB 객체는 **모두 `goguma_` 접두사**를 붙인다. (테이블, 함수, 트리거, 정책 이름)
 - `auth.users`(회원)는 두 앱이 **공유**한다.
   - 가입 트리거 `goguma_handle_new_user`는 `raw_user_meta_data.app = 'goguma'`인 사용자에게만 프로필을 만든다. 회원가입 시 `options.data.app = "goguma"`를 꼭 넣는다.
@@ -90,6 +92,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 접속 중 표시는 Realtime Presence 채널 `goguma-online`(`PresenceTracker`, `src/lib/presence.ts`). DB에 저장하지 않으며, 공개 채널이라 화면 표시용으로만 쓴다(권한 판단에 쓰지 않는다).
 - 장터 목록 조건(검색어·카테고리·정렬·필터·쪽)은 모두 주소(`?q=&cat=&sort=&onsale=&near=&page=`)에 담는다. 검색어는 PostgREST 필터 문법과 섞이지 않게 `, ( ) % * \`를 빼고 쓴다.
 - 목록 "최신순"은 `bumped_at`(끌어올린 시각) 기준. `goguma_set_updated_at` 트리거는 제목·가격·설명·상태·사진·카테고리가 바뀔 때만 `updated_at`을 바꾼다(조회수·끌어올리기는 "(고침)" 아님).
+- 믿을 수 있는 거래(`supabase/migrations/007_goguma_trust.sql`, 서버 액션 `src/app/trust/actions.ts`, 값 `src/lib/trust.ts`)
+  - 구매자(`goguma_posts.buyer_id`)는 **그 글로 판매자와 채팅한 사람만** 지정 가능(update 정책에서 확인). 후기는 거래완료+구매자 지정된 글의 판매자↔구매자만, 한 사람당 한 번.
+  - 인심 지수는 DB에 저장하지 않고 받은 후기로 계산한다(50.0 시작, 최고예요 +1.5 / 좋아요 +0.5 / 아쉬워요 −2.0, 0~100).
+  - 알림은 트리거(`goguma_on_comment/like/review/sold`)가 `goguma_notify`로 만든다. 차단 사이·자기 자신에게는 안 만든다. 사용자는 `read_at`만 고칠 수 있다.
+  - 신고(`goguma_reports`)는 신고한 사람만 볼 수 있다. **처리는 Supabase 대시보드에서** 관리자가 직접 본다(관리자 화면 없음).
+  - 차단하면: 목록에서 그 사람 글 빠짐, 댓글 숨김, 채팅 방 만들기·메시지 보내기 모두 DB가 막음(양쪽 모두).
+  - 판매자 join이 `goguma_posts_seller_id_fkey`만 있었는데 `buyer_id` 외래키가 생겨서, 글→프로필 join에는 반드시 외래키 이름을 적는다.
 - 옛 그림은 김홍도 「단원풍속도첩」(퍼블릭 도메인, Wikimedia Commons)을 `public/images/old/`에 둔 것이다.
 
 사진은 서버 액션(본문 1MB 제한)을 거치지 않고 브라우저에서 Storage의 `<내 uuid>/` 폴더로 바로 올린다. 서버에는 경로만 보내고 `isOwnImagePath`로 확인한다. 글을 고치면서 뺀 사진과 내린 글의 사진은 서버 액션이 Storage에서 지운다.

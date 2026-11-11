@@ -94,9 +94,15 @@ async function Market({ searchParams }: { searchParams: PageProps<"/posts">["sea
     data: { user },
   } = await supabase.auth.getUser();
   let myRegion = "";
+  let blockedIds: string[] = [];
   if (user) {
-    const { data } = await supabase.from("goguma_profiles").select("region").eq("id", user.id).maybeSingle();
+    const [{ data }, { data: blocks }] = await Promise.all([
+      supabase.from("goguma_profiles").select("region").eq("id", user.id).maybeSingle(),
+      // 내가 차단한 이웃의 글은 목록에서 뺀다
+      supabase.from("goguma_blocks").select("blocked_id").eq("blocker_id", user.id),
+    ]);
     myRegion = data?.region ?? "";
+    blockedIds = (blocks ?? []).map((b) => b.blocked_id);
   }
   const nearOn = f.near && !!myRegion;
 
@@ -115,6 +121,8 @@ async function Market({ searchParams }: { searchParams: PageProps<"/posts">["sea
   if (f.cat) query = query.eq("category", f.cat);
   if (f.onsale) query = query.neq("status", "sold");
   if (nearOn) query = query.eq("seller.region", myRegion);
+  // uuid만 들어 있으므로 목록 문법 (a,b,c)에 그대로 넣어도 안전하다
+  if (blockedIds.length) query = query.not("seller_id", "in", `(${blockedIds.join(",")})`);
 
   query =
     f.sort === "price_asc"
